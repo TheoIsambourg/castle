@@ -1,40 +1,30 @@
 var cheerio = require ('cheerio'); //provide the querry manipulations
 var request = require ('request');
-var url = 'https://www.relaischateaux.com/fr/site-map/etablissements';
+var fs = require('fs');
+const fetch = require("node-fetch");
 
 
-request(url, function(err, resp, body) 
-{
-    if (!err && resp.statusCode == 200) //to check if there's no error in downloading
-    { 
+scrappingRestos()
+
+async function scrappingRestos(){
+
+    var listOfRestaurants = [];
+    var res = await fetch("https://restaurant.michelin.fr/restaurants/france/restaurants-1-etoile-michelin/restaurants-2-etoiles-michelin/restaurants-3-etoiles-michelin")
+    res = await res.text()
+    var $ = cheerio.load(res);
+
+    $('div .poi_card-description').each(function(i) //context
+    {   
+        $(this).find("div .poi_card-display-title").each(function(k)
+        {
+            var name= $(this).text().trim();
+            listOfRestaurants.push({ "name": name})
+        })
+        
+    });
+    
 
    
-    if(body)
-    {
-        var $ = cheerio.load(body);
-    }
-    else
-    {
-        // body is null or empty
-    }
+   fs.writeFileSync("listOfRestaurantsEtoiles.json", JSON.stringify(listOfRestaurants, null, 2));
+}
 
-
-    $("#countryF").each(function(i) //context
-    {
-        if ($(this).find("h3").text() === 'France')
-        {
-            $(this).find("li").each(function(j)
-            {
-                $(this).find("a").each(function(k)
-                {
-                    if(k==0)
-                    {
-                        console.log($(this).filter("a").text().trim());
-                        console.log($(this).attr("href"));
-                    }
-                })
-            })
-        }
-    })
-   }
-});
